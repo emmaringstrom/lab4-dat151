@@ -19,7 +19,8 @@ import Fun.Abs
 import Fun.Print
 import Control.Monad.State
 
-data Value = Integer |  (Exp, Env)
+data Value = N Integer | C Closure
+newtype Closure = Closure Exp Env
 
 data Env = Env {
   vars :: [Map Id Value],
@@ -36,7 +37,34 @@ data Strategy
 
 type Err = Except String
 
-eval :: Exp -> State Env Int
+eval :: Exp -> State Env Value
+eval exp = case exp of
+  EVar id -> do
+    let v = lookup id
+    case v of
+      N i -> return i
+      C (Closure e gamma) -> do
+        update env gamma
+        eval e
+  EInt e -> return e
+  EApp e ->
+  EAdd e1 e2 -> do
+    let e1' = eval e1
+    let e2' = eval e2
+    return e1' + e2'
+  ESub e1 e2 -> do
+    let e1' = eval e1
+    let e2' = eval e2
+    return e1' - e2'
+  ELt e1 e2 -> do
+    let e1' = eval e1
+    let e2' = eval e2
+    if e1' < e2' then return 1 else return 0
+  EIf e1 e2 e3 -> do
+    let e1' = eval e1
+    if e1' == 1 then eval e2 
+      else eval e3
+  EAbs id e -> return Closure e 
 
 
 
